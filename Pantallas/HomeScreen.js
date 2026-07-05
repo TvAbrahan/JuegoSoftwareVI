@@ -11,6 +11,7 @@ export default function HomeScreen({ navigation }) {
 
       <View style={styles.menu}>
          <BigButton title="JUGAR" color="#4CAF50" onPress={() => navigation.navigate('Quiz')} /> 
+          <BigButton title="MEMORIA" color="#2196F3" onPress={() => navigation.navigate('MemoryGame')} />
         {/* <BigButton title="SONIDOS" color="#2196F3" onPress={() => navigation.navigate('SoundGame')} /> */}
         {/* <BigButton title="MEMORIA" color="#9C27B0" onPress={() => navigation.navigate('MemoryGame')} /> */}
         {/* <BigButton title="CARRERA" color="#FF9800" onPress={() => navigation.navigate('RaceGame')} /> */}
