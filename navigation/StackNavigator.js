@@ -11,6 +11,9 @@ import QuizScreen from '../Pantallas/QuizScreen';
 //import MemoryGameScreen from '../Pantallas/MemoryGameScreen';
 import RaceGameScreen from '../Pantallas/RaceGameScreen';
 import MemoryGameScreen from '../Pantallas/MemoryGameScreen'; 
+import ColorGameScreen from '../Pantallas/ColorGameScreen';
+import CountingGameScreen from '../Pantallas/CountingGameScreen';
+import PatternGameScreen from '../Pantallas/PatternGameScreen';
 
 const Stack = createStackNavigator();
 
@@ -26,6 +29,9 @@ export default function StackNavigator() {
         {/* <Stack.Screen name="MemoryGame" component={MemoryGameScreen} /> */}
         <Stack.Screen name="MemoryGame" component={MemoryGameScreen} />
         <Stack.Screen name="RaceGame" component={RaceGameScreen} />
+        <Stack.Screen name="ColorGame" component={ColorGameScreen} />
+        <Stack.Screen name="CountingGame" component={CountingGameScreen} />
+        <Stack.Screen name="PatternGame" component={PatternGameScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

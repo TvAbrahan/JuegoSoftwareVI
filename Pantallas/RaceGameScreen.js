@@ -1,88 +1,23 @@
-// Pantallas/RaceGameScreen.js
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { BounceIn, FadeInDown, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import GameScreen from '../components/GameScreen';
+import useGameSounds from '../hooks/useGameSounds';
 
-const { width } = Dimensions.get('window');
-
+const RACES = [
+  { world: 'Ciudad', icon: '🏙️', questions: [{ q: '¿Qué vehículo apaga el fuego?', o: ['🚑', '🚒', '🚓'], a: '🚒' }, { q: '¿Cuál transporta muchas personas?', o: ['🏎️', '🚌', '🚜'], a: '🚌' }] },
+  { world: 'Campo', icon: '🌾', questions: [{ q: '¿Cuál trabaja en la granja?', o: ['🚜', '🚕', '🚓'], a: '🚜' }, { q: '¿Cuál lleva carga pesada?', o: ['🚲', '🚚', '🏎️'], a: '🚚' }] },
+  { world: 'Pista final', icon: '🏁', questions: [{ q: '¿Qué auto está hecho para competir?', o: ['🚑', '🏎️', '🚌'], a: '🏎️' }, { q: 'La luz está roja. ¿Qué debes hacer?', o: ['💨', '🛑', '🏁'], a: '🛑' }, { q: 'La luz está verde. ¿Qué haces?', o: ['🚦', '▶️', '🅿️'], a: '▶️' }] },
+];
 export default function RaceGameScreen({ navigation }) {
-  const [progress, setProgress] = useState(0); 
-  const [hasWon, setHasWon] = useState(false);
-
-  
-  const questions = [
-    { q: '¿Qué vehículo apaga el fuego?', opciones: ['🚑', '🚒', '🚓'], correcta: '🚒' },
-    { q: '¿Cuál va por las vías del tren?', opciones: ['🚂', '🚗', '🛵'], correcta: '🚂' },
-    { q: '¿Cuál vuela por el cielo?', opciones: ['🚜', '🚢', '🚀'], correcta: '🚀' },
-  ];
-
-  const [currentQ, setCurrentQ] = useState(0);
-
-  const handleAnswer = (opcion) => {
-    if (hasWon) return;
-
-    if (opcion === questions[currentQ].correcta) {
-      const nextProgress = progress + (width - 120) / questions.length;
-      setProgress(nextProgress);
-
-      if (currentQ + 1 < questions.length) {
-        setCurrentQ(currentQ + 1);
-      } else {
-        setHasWon(true);
-      }
-    } else {
-      alert('¡Inténtalo otra vez! ❌');
-    }
-  };
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>🏎️ ¡Carrera de Respuestas! 🏁</Text>
-
-      {/* Pista de carreras */}
-      <View style={styles.track}>
-        <Animated.View style={[styles.carContainer, { left: progress }]}>
-          <Text style={styles.car}>{hasWon ? '🎉' : '🏎️'}</Text>
-        </Animated.View>
-        <Text style={styles.finishLine}>🏁</Text>
-      </View>
-
-      {hasWon ? (
-        <View style={styles.winBox}>
-          <Text style={styles.winText}>🎉🎉🎉 ¡GANASTE! 🎉🎉🎉</Text>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.navigate('Home')}>
-            <Text style={styles.backText}>Volver al Inicio</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <View style={styles.gameBox}>
-          <Text style={styles.question}>{questions[currentQ].q}</Text>
-          <View style={styles.optionsRow}>
-            {questions[currentQ].opciones.map((op, index) => (
-              <TouchableOpacity key={index} style={styles.optionCard} onPress={() => handleAnswer(op)}>
-                <Text style={styles.optionEmoji}>{op}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      )}
-    </View>
-  );
+  const [race, setRace] = useState(0); const [question, setQuestion] = useState(0); const [message, setMessage] = useState('¡Responde para acelerar!'); const x = useSharedValue(0); const sounds = useGameSounds();
+  const stage = RACES[race]; const item = stage.questions[question]; const carStyle = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  const choose = (option) => { if (option !== item.a) { sounds.playTryAgain(); setMessage('Perdiste un poco de velocidad. ¡Prueba otra vez!'); x.value = withSpring(Math.max(0, x.value - 12)); return; } sounds.playCorrect(); x.value = withSpring((question + 1) * 95); if (question + 1 < stage.questions.length) { setQuestion((v) => v + 1); setMessage('¡Bien! Se acerca otra curva.'); } else { sounds.playWin(); setMessage(`¡Ganaste la etapa ${stage.world}!`); setTimeout(() => { setRace((v) => (v + 1) % RACES.length); setQuestion(0); x.value = 0; setMessage('¡Nueva pista desbloqueada!'); }, 1000); } };
+  return <GameScreen navigation={navigation} color={race === 0 ? '#F08A24' : race === 1 ? '#3DA867' : '#D64E45'} title="Copa de conocimientos" subtitle={message} score={`Etapa ${race + 1}/3`}>
+    <View style={styles.world}><Text style={styles.worldIcon}>{stage.icon}</Text><View><Text style={styles.worldLabel}>PISTA ACTUAL</Text><Text style={styles.worldName}>{stage.world}</Text></View></View>
+    <View style={styles.track}><View style={styles.dash} /><Animated.Text style={[styles.car, carStyle]}>🏎️</Animated.Text><Text style={styles.finish}>🏁</Text></View>
+    <Animated.View key={`${race}-${question}`} entering={FadeInDown.springify()} style={styles.questionBox}><Text style={styles.lap}>RETO {question + 1}/{stage.questions.length}</Text><Text style={styles.question}>{item.q}</Text></Animated.View>
+    <View style={styles.options}>{item.o.map((option, i) => <Animated.View entering={BounceIn.delay(i * 80)} key={option} style={styles.optionWrap}><Pressable onPress={() => choose(option)} style={({ pressed }) => [styles.option, pressed && styles.pressed]}><Text style={styles.optionText}>{option}</Text></Pressable></Animated.View>)}</View>
+  </GameScreen>;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FF9800', padding: 20, justifyContent: 'center' },
-  title: { fontSize: 26, fontWeight: 'bold', color: '#FFF', textAlign: 'center', marginBottom: 30 },
-  track: { height: 60, backgroundColor: '#333', borderRadius: 10, position: 'relative', justifyContent: 'center', marginVertical: 20, borderTopWidth: 2, borderBottomWidth: 2, borderColor: '#FFF', borderStyle: 'dashed' },
-  carContainer: { position: 'absolute' },
-  car: { fontSize: 35 },
-  finishLine: { position: 'absolute', right: 10, fontSize: 30 },
-  gameBox: { backgroundColor: 'rgba(255,255,255,0.9)', padding: 20, borderRadius: 20, alignItems: 'center' },
-  question: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  optionsRow: { flexDirection: 'row', justifyContent: 'space-around', width: '100%' },
-  optionCard: { backgroundColor: '#FFF', padding: 15, borderRadius: 15, elevation: 3 },
-  optionEmoji: { fontSize: 45 },
-  winBox: { alignItems: 'center', marginTop: 20 },
-  winText: { fontSize: 28, fontWeight: 'bold', color: '#FFF' },
-  backBtn: { backgroundColor: '#FFF', padding: 15, borderRadius: 20, marginTop: 20 },
-  backText: { fontSize: 18, fontWeight: 'bold', color: '#FF9800' }
-});
+const styles = StyleSheet.create({ world: { backgroundColor: '#FFFFFF', borderRadius: 20, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 12 }, worldIcon: { fontSize: 39 }, worldLabel: { color: '#E16D18', fontSize: 10, fontWeight: '900', letterSpacing: 1.2 }, worldName: { color: '#17305E', fontSize: 21, fontWeight: '900' }, track: { height: 95, backgroundColor: '#35415A', borderRadius: 22, justifyContent: 'center', overflow: 'hidden' }, dash: { height: 5, backgroundColor: '#FFD75C' }, car: { position: 'absolute', left: 7, fontSize: 48 }, finish: { position: 'absolute', right: 8, fontSize: 42 }, questionBox: { backgroundColor: '#FFF4D0', borderRadius: 24, padding: 19 }, lap: { color: '#D56518', fontSize: 11, fontWeight: '900', letterSpacing: 1.2 }, question: { color: '#17305E', fontSize: 23, lineHeight: 28, fontWeight: '900', paddingTop: 4 }, options: { flexDirection: 'row', gap: 10 }, optionWrap: { flex: 1 }, option: { height: 100, borderRadius: 22, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderBottomWidth: 6, borderBottomColor: '#D7C8B6' }, pressed: { transform: [{ scale: 0.92 }] }, optionText: { fontSize: 44 } });

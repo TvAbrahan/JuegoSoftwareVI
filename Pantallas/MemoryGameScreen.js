@@ -1,6 +1,7 @@
 // Pantallas/MemoryGameScreen.js
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, ScrollView, Dimensions } from 'react-native';
+import useGameSounds from '../hooks/useGameSounds';
 
 // Lista de 6 transportes únicos para crear las parejas (Total: 12 tarjetas)
 const TRANSPORTES_BASE = [
@@ -13,9 +14,10 @@ const TRANSPORTES_BASE = [
 ];
 
 // Función para generar y mezclar el tablero de juego
-const generarTablero = () => {
+const generarTablero = (cantidadParejas = 3) => {
   // Duplicamos la lista para tener parejas
-  const tarjetasDuplicadas = [...TRANSPORTES_BASE, ...TRANSPORTES_BASE];
+  const seleccion = TRANSPORTES_BASE.slice(0, cantidadParejas);
+  const tarjetasDuplicadas = [...seleccion, ...seleccion];
   
   // Les asignamos un ID único a cada una y estados iniciales
   return tarjetasDuplicadas
@@ -30,14 +32,16 @@ const generarTablero = () => {
 };
 
 export default function MemoryGameScreen({ navigation }) {
+  const sounds = useGameSounds();
   const [cards, setCards] = useState([]);
   const [seleccionadas, setSeleccionadas] = useState([]);
   const [movimientos, setMovimientos] = useState(0);
+  const [nivel, setNivel] = useState(1);
 
   // Iniciar el tablero cuando se abre la pantalla
   useEffect(() => {
-    setCards(generarTablero());
-  }, []);
+    setCards(generarTablero([3, 4, 6][nivel - 1]));
+  }, [nivel]);
 
   const seleccionarTarjeta = (index) => {
     // Evitar que voltee la misma, una ya completada, o más de 2 a la vez
@@ -57,6 +61,7 @@ export default function MemoryGameScreen({ navigation }) {
       const [idx1, idx2] = seleccionadas;
 
       if (cards[idx1].emoji === cards[idx2].emoji) {
+        sounds.playCorrect();
         // ¡Encontró una pareja!
         const nuevasCards = [...cards];
         nuevasCards[idx1].completado = true;
@@ -64,6 +69,7 @@ export default function MemoryGameScreen({ navigation }) {
         setCards(nuevasCards);
         setSeleccionadas([]);
       } else {
+        sounds.playTryAgain();
         // No son iguales, se vuelven a tapar en 1 segundo
         setTimeout(() => {
           const nuevasCards = [...cards];
@@ -77,7 +83,8 @@ export default function MemoryGameScreen({ navigation }) {
   }, [seleccionadas]);
 
   const reiniciarJuego = () => {
-    setCards(generarTablero());
+    if (yaGano) setNivel(prev => prev === 3 ? 1 : prev + 1);
+    else setCards(generarTablero([3, 4, 6][nivel - 1]));
     setSeleccionadas([]);
     setMovimientos(0);
   };
@@ -98,12 +105,14 @@ export default function MemoryGameScreen({ navigation }) {
       <Text style={styles.title}>¡Gran Memoria de Autos! 🧠</Text>
 
       {/* Tablero de 3 columnas x 4 filas (Ajustado para que quepa en cualquier pantalla) */}
+      <Text style={styles.levelHint}>Nivel {nivel}: {nivel === 1 ? '3 parejas' : nivel === 2 ? '4 parejas' : '6 parejas'}</Text>
       <View style={styles.grid}>
         {cards.map((card, index) => (
           <TouchableOpacity
             key={card.id}
             style={[
-              styles.card, 
+              styles.card,
+              cards.length <= 6 && styles.cardLarge,
               (card.descubierto || card.completado) ? styles.cardOpen : styles.cardClosed
             ]}
             onPress={() => seleccionarTarjeta(index)}
@@ -137,12 +146,14 @@ const styles = StyleSheet.create({
   backText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
   scoreText: { color: '#FFF', fontSize: 18, fontWeight: 'bold', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
   title: { fontSize: 24, fontWeight: 'bold', color: '#FFF', textAlign: 'center', marginTop: 5 },
+  levelHint: { color: '#F4D7FF', fontSize: 16, fontWeight: '800' },
   
   // El Grid distribuye las tarjetas en filas de 3 de forma fluida
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', width: '100%', maxWidth: 360, marginVertical: 10 },
   
   // Tamaño óptimo para que entren las 12 tarjetas sin salir de la pantalla
   card: { width: 95, height: 95, margin: 8, borderRadius: 22, justifyContent: 'center', alignItems: 'center', elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 3 },
+  cardLarge: { width: 105, height: 105 },
   cardClosed: { backgroundColor: '#FFF', borderBottomWidth: 5, borderColor: '#DDD' },
   cardOpen: { backgroundColor: '#FFD700', borderBottomWidth: 0 },
   cardText: { fontSize: 45 },
