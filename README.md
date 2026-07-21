@@ -1,4 +1,4 @@
-# Hot Wheels Kids Adventure
+# Aventura Kids
 
 Aplicación móvil educativa para niños, desarrollada con React Native y Expo. Incluye minijuegos relacionados con vehículos que ayudan a practicar memoria, lógica, colores, conteo y seguridad vial.
 

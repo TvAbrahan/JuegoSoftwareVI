@@ -19,7 +19,7 @@ export default function SplashScreen({ navigation }) {
     <View style={styles.screen}>
       <View style={styles.sun}><Text style={styles.sunText}>★</Text></View>
       <Animated.View style={[styles.logo, { opacity: fade, transform: [{ scale }] }]}>
-        <Text style={styles.kicker}>APRENDE • JUEGA • SONRÍE</Text><Text style={styles.title}>Hot Wheels</Text><Text style={styles.subtitle}>KIDS ADVENTURE</Text>
+        <Text style={styles.kicker}>APRENDE • JUEGA • SONRÍE</Text><Text style={styles.title}>Aventura</Text><Text style={styles.subtitle}>KIDS</Text>
       </Animated.View>
       <View style={styles.road}><View style={styles.roadLine} /><Animated.Text style={[styles.car, { transform: [{ translateX: carX }] }]}>🏎️</Animated.Text></View>
       <Animated.Text style={[styles.welcome, { opacity: fade }]}>¡Preparando tu aventura!</Animated.Text>
